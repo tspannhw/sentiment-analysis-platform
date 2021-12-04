@@ -54,11 +54,7 @@ class TweetAnalyzer:
         self.nltk_parser = nltk_parser
 
     def clean_tweet(self, tweet):
-        return " ".join(
-            re.sub(
-                "(@[A-Za-z0-9]+)|([^0-9A-Za-z \t])|(\w+:\/\/\S+)", " ", tweet
-            ).split()
-        )
+        return " ".join(re.sub("(@[A-Za-z0-9]+)|([^0-9A-Za-z \t])|(\w+:\/\/\S+)", " ", tweet).split())
 
     def analyze_sentiment(self, tweet):
         analysis = TextBlob(self.clean_tweet(tweet))
@@ -91,34 +87,29 @@ class TweetAnalyzer:
     def tweets_to_df(self, tweets):
         tweet_df = {}
         # set columns
+
         for t in tweets:
-            for k, _ in t.__dict__.items():
-                if (
-                    "__" not in k
-                    and (not k.startswith("_") or k == "_json")
-                    and k not in tweet_df.keys()
-                ):
+            if type(t) != dict:
+                t = t.__dict__
+            for k, _ in t.items():
+                if "__" not in k and (not k.startswith("_") or k == "_json") and k not in tweet_df.keys():
                     tweet_df[k] = []
 
         for t in tweets:
             for k in tweet_df.keys():
-                t_dict = t.__dict__
-                v = t_dict.get(k, None)
+                if type(t) != dict:
+                    t = t.__dict__
+                v = t.get(k, None)
                 if "__" not in k and (not k.startswith("_") or k == "_json"):
                     if type(v) == dict:
                         d = {f"{k}_{ik}": iv for ik, iv in v.items()}
                         tweet_df[k].append(d)
-                    elif (
-                        type(v) not in (dict, str, bool, int, float, datetime.datetime)
-                        and v is not None
-                    ):
-                        d = {f"{k}_{ik}": iv for ik, iv in v.__dict__.items()}
+                    elif type(v) not in (dict, str, bool, list, int, float, datetime.datetime) and v is not None:
+                        v = v if type(v) == dict else v.__dict__
+                        d = {f"{k}_{ik}": iv for ik, iv in v.items()}
                         tweet_df[k].append(d)
                     else:
-                        if v is None:
-                            tweet_df[k].append("")
-                        else:
-                            tweet_df[k].append(v)
+                        tweet_df[k].append(v)
 
         df = pd.DataFrame.from_dict(tweet_df)
         return df
@@ -131,9 +122,7 @@ class TwitterClient:
         auth.set_access_token(config.access_token, config.access_token_secret)
         self.api = API(auth)
 
-    def get_recent_tweets(
-        self, query: str = "covid -is:retweet", num_tweets: int = 10000
-    ):
+    def get_recent_tweets(self, query: str = "covid -is:retweet", num_tweets: int = 10000):
         tweets = []
         c = self.client
         for tweet in Paginator(
@@ -148,7 +137,6 @@ class TwitterClient:
                 user_id = tweet.author_id
                 data = c.get_user(id=user_id)
                 tweet.author_id = dict(data.data)
-
             tweets.append(tweet)
         return tweets
 
@@ -157,9 +145,7 @@ class TwitterClient:
         user_client = self.client
         user = user_client.get_user(username="j__moussa")
         user_id = user.data.id
-        for tweet in Paginator(
-            self.client.get_users_tweets, user_id, max_results=num_tweets
-        ).flatten(limit=num_tweets):
+        for tweet in Paginator(self.client.get_users_tweets, user_id, max_results=num_tweets).flatten(limit=num_tweets):
             tweets.append(tweet)
         return tweets
 
@@ -198,9 +184,7 @@ class TwitterListener(Stream):
     def on_data(self, data):
         # Data processing
         try:
-            str_data = (
-                data.decode("utf-8", "ignore").replace("\/", "/").replace("\\n", "")
-            )
+            str_data = data.decode("utf-8", "ignore").replace("\/", "/").replace("\\n", "")
             # validate json
             data = json.loads(str_data)
             if self.data_processing_fn is not None:
@@ -222,26 +206,22 @@ class TwitterListener(Stream):
         logger.error(f"Error, status: {status}")
 
 
-def analyze_tweets(tweet_objects: list):
+def analyze_tweets(tweet_docs: list):
     """
     Takes a list of tweet objects and scores them and returns the updated documents
     """
     analyzer = TweetAnalyzer()
-    df = analyzer.tweets_to_df(tweet_objects)
-    df["analysis_textblob"] = np.array(
-        [analyzer.analyze_sentiment(tweet) for tweet in df["text"]]
-    )
+    df = analyzer.tweets_to_df(tweet_docs)
+    print(df)
+    df["analysis_textblob"] = np.array([analyzer.analyze_sentiment(tweet) for tweet in df["text"]])
     for i in ("neg", "neu", "pos", "compound"):
-        df[f"analysis_nltk_{i}"] = np.array(
-            [analyzer.parse_nltk(tweet)[i] for tweet in df["text"]]
-        )
+        df[f"analysis_nltk_{i}"] = np.array([analyzer.parse_nltk(tweet)[i] for tweet in df["text"]])
     # Apply the function column wise to each column of interest
     # df = pd.concat([df, json_normalize(df["user"])], axis=1)
-    final_df = pd.concat([df, df["user"].apply(json_to_series)], axis=1)
-    final_df.drop("user", 1, inplace=True)
     print(
-        final_df[
+        df[
             [
+                "id",
                 "text",
                 "analysis_textblob",
                 "analysis_nltk_compound",
@@ -251,7 +231,8 @@ def analyze_tweets(tweet_objects: list):
             ]
         ]
     )
-    record_list = final_df.to_dict("records")
+    record_list = df.to_dict("records")
+
     return record_list
 
 
@@ -259,20 +240,12 @@ def analyze_user_timeline(user="j__moussa", home=False):
     t = TwitterClient()
     analyzer = TweetAnalyzer()
     api = t.api
-    tweets = (
-        api.user_timeline(screen_name=user, count=200)
-        if not home
-        else api.home_timeline(count=200)
-    )
+    tweets = api.user_timeline(screen_name=user, count=200) if not home else api.home_timeline(count=200)
     df = analyzer.tweets_to_df(tweets)
-    df["analysis_textblob"] = np.array(
-        [analyzer.analyze_sentiment(tweet) for tweet in df["text"]]
-    )
+    df["analysis_textblob"] = np.array([analyzer.analyze_sentiment(tweet) for tweet in df["text"]])
     # df["analysis_bert"] = np.array([analyzer.analyze_content(tweet) for tweet in df["text"]])
     for i in ("neg", "neu", "pos", "compound"):
-        df[f"analysis_nltk_{i}"] = np.array(
-            [analyzer.parse_nltk(tweet)[i] for tweet in df["text"]]
-        )
+        df[f"analysis_nltk_{i}"] = np.array([analyzer.parse_nltk(tweet)[i] for tweet in df["text"]])
 
     # Apply the function column wise to each column of interest
     # df = pd.concat([df, json_normalize(df["user"])], axis=1)
@@ -313,9 +286,7 @@ def stream_tweets_by_keyword(keyword_search: list, filename="tweets.json"):
 
 
 def plot_sentiment_timeline(data_gen_func=None):
-    recs = (
-        analyze_user_timeline(home=True) if data_gen_func is None else data_gen_func()
-    )
+    recs = analyze_user_timeline(home=True) if data_gen_func is None else data_gen_func()
     df = pd.DataFrame.from_records(recs)
     viz = TweetVisualizer()
     viz.plot_analysis_over_time(
@@ -332,4 +303,3 @@ def plot_sentiment_timeline(data_gen_func=None):
 
 if __name__ == "__main__":
     plot_sentiment_timeline()
-

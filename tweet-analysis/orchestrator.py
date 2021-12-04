@@ -1,8 +1,10 @@
 """
 Runner for all scraping jobs
 """
-from streamer import TwitterClient
-from es import wrap_tweet_for_es_insert, send_to_elasticsearch
+from types import WrapperDescriptorType
+from streamer import TwitterClient, analyze_tweets
+from es import es, wrap_tweet_for_es_insert, send_to_elasticsearch
+from elasticsearch import helpers
 from config import config
 import logging
 
@@ -23,9 +25,28 @@ def sentiment_analysis():
     # query elasticsearch for recent tweets
     # send list of _source objects to analyze_tweets
     # send list of scored and updated tweets to index
-    pass
+    tweets = []
+    for doc in helpers.scan(
+        es,
+        query={
+            "query": {
+                "bool": {"must_not": {"exists": {"field": "analysis_nltk_compound"}}}
+            },
+        },
+        index="tweets",
+        size=10000,
+    ):
+        tweet = doc["_source"]
+        tweets.append(tweet)
+    updated_tweets = analyze_tweets(tweets)
+    for t in updated_tweets:
+        yield wrap_tweet_for_es_insert(t)
+
+
+def index_sentiment_analysis():
+    send_to_elasticsearch(sentiment_analysis, config.tweet_index)
 
 
 if __name__ == "__main__":
     index_recent_tweets()
-
+    index_sentiment_analysis()
