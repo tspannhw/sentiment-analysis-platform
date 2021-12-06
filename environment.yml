@@ -1,0 +1,6 @@
+name: sentiment 
+channels:
+  - anaconda-fusion
+  - defaults
+dependencies:
+  - python=3.8

@@ -50,3 +50,4 @@ def index_sentiment_analysis():
 if __name__ == "__main__":
     index_recent_tweets()
     index_sentiment_analysis()
+

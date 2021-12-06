@@ -9,7 +9,11 @@ matplotlib
 numpy
 requests
 textblob==0.17.1
-
+anyio==3.4.0 
+fastapi==0.70.0 
+pydantic==1.8.2 
+sniffio==1.2.0 
+starlette==0.16.0
 torch==1.8.1 
 torchvision==0.9.1
 torchaudio==0.8.1

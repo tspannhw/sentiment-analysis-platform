@@ -1,6 +1,6 @@
 from pulsar import Function
 import json
-from ..elasticsearch import send_to_elasticsearch
+from ..es import send_to_elasticsearch
 
 # A function that demonstrates how to redirect logging to a topic.
 # In this particular example, for every input string, the function

@@ -1,3 +1,6 @@
+.vscode/
+.vim/
+*.vscode/
 *.vim/
 *__pycache__/
 *.egg-info/
