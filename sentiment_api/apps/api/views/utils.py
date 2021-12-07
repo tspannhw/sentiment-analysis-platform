@@ -32,5 +32,5 @@ def execute_search(query: dict, index=config.tweet_index, size=100000):
 
 
 def get_trending_tweets():
-    return TwitterClient.get_trending_tweets()
+    return TwitterClient.fetch_trending_tweets()
 

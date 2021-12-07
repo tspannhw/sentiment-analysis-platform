@@ -141,8 +141,10 @@ class TwitterClient:
         tweets = []
         if trending_topic_count > len(trends):
             trending_topic_count = len(trends) - 1
+        logger.info("Trending topics:")
         for trend in trends[:trending_topic_count]:
-            query = trend["name"]
+            query = trend["query"]
+            logger.info(f"{trend['name']}")
             tweets += self.get_recent_tweets(query)
         return tweets
 
