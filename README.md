@@ -1,14 +1,14 @@
-# Sentiment Analysis Back-end
+# Content Platform: Sentiment Analysis
+>> A data platform comprised of Twitter content and a sentiment analysis pipeline
 
 ## Architecture
 
 - Elasticsearch
-- Apache Pulsar
-- RestAPI + WebSockets
-- Background Tweet 'crawler'
+- Apache Pulsar (Stream & Stream Processing)
+- FastAPI + WebSockets (Query Tweets + Sentiment Scores)
+- Batch + Streaming Pipeline (Tweet Acquisition + Scoring)
 
 ## Summary
-
 Elasticsearch stores tweets processed through pulsar and pulsar-functions.
 The crawler is a set of scripts/functions that load/stream data into pulsar and parse/run's NLP Sentiment Analysis.
 The API will query Elasticsearch, and trigger crawler jobs to load content into Elasticsearch.
@@ -41,41 +41,35 @@ python setup.py develop
 ```
 
 ### Run Webserver
-
 ```bash
 ./sentiment_api/scripts/runserver-dev.sh
 ```
 
-### Run Content (tweet) Collection and Sentiment Analysis
-
-**Requires elasticsearch to be running**
+### Run Batch Process: Content Acquisition and Sentiment Analysis
+**Requires elasticsearch to be running on localhost:9200**
 
 ```bash
 python tweet_analysis/orchestrator.py
 ```
 
-## Proof of Concept (current build)
-
+## Current Build
 ### API Endpoints (and scheduled background tasks)
-
-- [ ] Fetch Latest Content From Elasticsearch (param: days_back)
+- [ ] Fetch Latest Content (param: days_back)
+- [ ] Fetch Top Trending Content 
+- [ ] Search for Content
 
 ### Scheduled scrape jobs
-
 - [ ] Scrape Top Trending Tags for content -> Elasticsearch
-  - [ ] Tweepy -> ES
 - [ ] Perform Sentiment Analysis on content In Elasticsearch
-  - [ ] query 30 mins back in ES
+  - [ ] query 10 mins back in ES
   - [ ] Score tweet text
   - [ ] push updates to ES
 
-### Streaming Aspirations
-
+### Streaming: Future Feature 
 - [ ] Pulsar Function that performs sentiment analysis on content as it is streamed into pulsar topics
-  - Need to research pulsar admin and how it works in production (Dockerfile/docker_run.sh?)
+  - Need to research pulsar-admin and how to implement in production (Dockerfile/docker_run.sh?)
 
 # API Blueprint
-
 - Endpoints:
   - Query a user's home timeline (tweepy)
   - Fetch tweets by keyword (tweepy+elasticsearch keyword search): will also trigger crawling job
