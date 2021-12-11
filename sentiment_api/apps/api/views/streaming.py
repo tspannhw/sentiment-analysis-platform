@@ -18,6 +18,7 @@ async def fetch_tweets(req: TweetRequest):
     if req.type < 3:
         # non-keyword (fetch recent or trending)
         if req.type == 1:
+            logger.info("Returning Most Recent Content")
             # most recent scored and sorted
             query = {
                 "query": {
@@ -27,16 +28,18 @@ async def fetch_tweets(req: TweetRequest):
             }
             docs = execute_search(query, size=req.limit)
         else:
+            logger.info("Returning Trending Tweets (dictionary)")
             # results for tweets in top trending tags scored and sorted
             docs = get_trending_tweets()
     else:
         # keyword search
+        logger.info(f"Searching Tweets: '{req.keyword}'")
         query = {
             "query": {
                 "bool": {
                     "must": {
                         "multi_match": {
-                            "query": TweetRequest.keyword,
+                            "query": req.keyword,
                             "fields": ["text", "author_id.name", "author_id.username"],
                         }
                     }

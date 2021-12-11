@@ -28,9 +28,9 @@ def execute_search(query: dict, index=config.tweet_index, size=100000):
         es, query=query, index=index, size=size, preserve_order=True
     ):
         docs.append(doc)
+    logger.info(f"Fetched {len(docs)} es docs")
     return docs
 
 
 def get_trending_tweets():
     return TwitterClient.fetch_trending_tweets()
-
