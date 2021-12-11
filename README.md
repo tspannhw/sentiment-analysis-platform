@@ -1,5 +1,5 @@
 # Content Platform: Sentiment Analysis
->> A data platform comprised of Twitter content and a sentiment analysis pipeline
+> A data platform comprised of Twitter content and a sentiment analysis pipeline
 
 ## Architecture
 
