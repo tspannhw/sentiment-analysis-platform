@@ -232,7 +232,7 @@ class TwitterListener(Stream):
 
 def analyze_tweets(tweet_docs: list):
     """
-    Takes a list of tweet objects and scores them and returns the updated documents
+    Takes a list of tweet objects, scores them and returns the updated documents.
     """
     analyzer = TweetAnalyzer()
     df = analyzer.tweets_to_df(tweet_docs)
@@ -261,6 +261,11 @@ def analyze_tweets(tweet_docs: list):
 
 
 def analyze_user_timeline(user="j__moussa", home=False):
+    """
+    Fetches the Tweets on the user's public timeline.
+    :param user: Twitter username
+    :param home: Toggle to analyze your private Twitter homefeed
+    """
     t = TwitterClient()
     analyzer = TweetAnalyzer()
     api = t.api
@@ -310,6 +315,10 @@ def stream_tweets_by_keyword(keyword_search: list, filename="tweets.json"):
 
 
 def plot_sentiment_timeline(data_gen_func=None):
+    """
+    Plots the sentiment timeline for the user (if date_gen_func is empty)
+    :params data_gen_func: function that returns data
+    """
     recs = analyze_user_timeline(home=True) if data_gen_func is None else data_gen_func()
     df = pd.DataFrame.from_records(recs)
     viz = TweetVisualizer()
