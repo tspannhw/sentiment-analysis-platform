@@ -67,13 +67,14 @@ python tweet_analysis/orchestrator.py
 
 ### Streaming: Future Feature 
 - [ ] Pulsar Function that performs sentiment analysis on content as it is streamed into pulsar topics
-  - Need to research pulsar-admin and how to implement in production (Dockerfile/docker_run.sh?)
+  - Research pulsar-admin and how to implement in production (Dockerfile? docker_run.sh?)
+
+![Twitter Streaming](./stream_arch.png)
+
 
 # API Blueprint
 - Endpoints:
   - Query a user's home timeline (tweepy)
-  - Fetch tweets by keyword (tweepy+elasticsearch keyword search): will also trigger crawling job
-  - Get live tweets by tag:
-    - Open a pulsar stream (or subscribe to existing stream) of tweets: utilizing WebSockets
+  - Fetch tweets by keyword (elasticsearch)
 
 Will likely need to use docker-compose.yml for easy launch of a local dev instance (pulsar and elasticsearch included)

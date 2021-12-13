@@ -230,7 +230,7 @@ class TwitterListener(Stream):
         logger.error(f"Error, status: {status}")
 
 
-def analyze_tweets(tweet_docs: list):
+def score_tweets(tweet_docs: list):
     """
     Takes a list of tweet objects, scores them and returns the updated documents.
     """
