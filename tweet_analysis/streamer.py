@@ -1,9 +1,9 @@
 from transformers.file_utils import DATASETS_IMPORT_ERROR
 from tweepy import Client, API, Stream, Paginator, OAuthHandler
-from config import config
+from .config import config
 from textblob import TextBlob
-from bert_analysis import calc_sentiment
-from nltk_parser import sia
+from .bert_analysis import calc_sentiment
+from .nltk_parser import sia
 import re
 import logging
 import coloredlogs

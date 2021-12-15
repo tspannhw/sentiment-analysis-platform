@@ -6,7 +6,7 @@ import json
 from fastapi import WebSocket, WebSocketDisconnect
 from fastapi.routing import APIRouter
 from ..models.tweet import TweetRequest
-from utils import execute_search, get_trending_tweets
+from sentiment_api.apps.api.views.utils import execute_search, get_trending_tweets
 import pulsar
 from tweet_analysis.config import config
 
@@ -57,7 +57,9 @@ async def websocket_endpoint(websocket: WebSocket, topic: str, subscription: str
             # Start Pulsar consumer and consume messages back to API
             msg = consumer.receive()
             try:
-                logger.info("Received message '{}' id='{}'".format(msg.data(), msg.message_id()))
+                logger.info(
+                    "Received message '{}' id='{}'".format(msg.data(), msg.message_id())
+                )
                 # Acknowledge successful processing of the message
                 await manager.send_personal_message(msg.data(), websocket)
                 consumer.acknowledge(msg)
@@ -79,14 +81,18 @@ async def fetch_tweets(req: TweetRequest) -> dict:
             logger.info("Returning Most Recent Content")
             # most recent scored and sorted
             query = {
-                "query": {"bool": {"must": {"exists": {"field": "analysis_nltk_compound"}}}},
+                "query": {
+                    "bool": {"must": {"exists": {"field": "analysis_nltk_compound"}}}
+                },
                 "sort": [{"created_at": "desc"}],
             }
             docs = execute_search(query, size=req.limit)
         else:
             # results for tweets in top trending tags scored and sorted
             docs = get_trending_tweets()
-            logger.info(f"Returning Trending Tweets (dictionary)\n{json.dumps(docs, indent=2)}")
+            logger.info(
+                f"Returning Trending Tweets (dictionary)\n{json.dumps(docs, indent=2)}"
+            )
     else:
         # keyword search
         logger.info(f"Searching Tweets: '{req.keyword}'")
@@ -105,3 +111,4 @@ async def fetch_tweets(req: TweetRequest) -> dict:
         }
         docs = execute_search(query, size=req.limit)
     return docs
+
