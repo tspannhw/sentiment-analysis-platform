@@ -43,7 +43,8 @@ async def websocket_endpoint(websocket: WebSocket, topic: str, subscription: str
     """
     Websocket connection to stream-in tweets.
     Under the hood: Start up pulsar consumer to pull in tweets based on the search query
-
+    :query param: topic (kafka/pulsar topic)
+    :query subscription: unique user_id to differentiate websocket session
     """
     # TODO: Abstract this to config
     client = pulsar.Client(config.pulsar_client_url)
@@ -69,7 +70,7 @@ async def websocket_endpoint(websocket: WebSocket, topic: str, subscription: str
 
 
 @router.get("/tweets")
-async def fetch_tweets(req: TweetRequest):
+async def fetch_tweets(req: TweetRequest) -> dict:
     # query elasticsearch for tweets based on Request
     logger.info(req)
     if req.type < 3:
@@ -83,9 +84,9 @@ async def fetch_tweets(req: TweetRequest):
             }
             docs = execute_search(query, size=req.limit)
         else:
-            logger.info("Returning Trending Tweets (dictionary)")
             # results for tweets in top trending tags scored and sorted
             docs = get_trending_tweets()
+            logger.info(f"Returning Trending Tweets (dictionary)\n{json.dumps(docs, indent=2)}")
     else:
         # keyword search
         logger.info(f"Searching Tweets: '{req.keyword}'")
